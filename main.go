@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/base64"
 	"log"
+	"math"
 	"strconv"
 	"time"
 
@@ -95,46 +95,74 @@ func deleteTodoHandler(c *gin.Context) {
 func listTodoHandler(c *gin.Context) {
 	userID := c.Query("user_id")
 	status := c.Query("status")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	pagingState := c.Query("paging_state")
 
 	var todos []TodoItem
 	var todo TodoItem
 	var query string
+	var totalTodos int
 
 	if status != "" {
-		query = "SELECT id, user_id, title, description, status, created, updated FROM items WHERE user_id = ? AND status = ? LIMIT ?"
-	} else {
-		query = "SELECT id, user_id, title, description, status, created, updated FROM items WHERE user_id = ? LIMIT ?"
-	}
-
-	// Decode the paging state from base64 if it exists
-	var decodedPagingState []byte
-	if pagingState != "" {
-		var err error
-		decodedPagingState, err = base64.StdEncoding.DecodeString(pagingState)
-		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid paging state"})
+		query = "SELECT COUNT(*) FROM items WHERE user_id = ? AND status = ? ALLOW FILTERING"
+		if err := session.Query(query, userID, status).Scan(&totalTodos); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
+		}
+
+		query = "SELECT id, user_id, title, description, status, created, updated FROM items WHERE user_id = ? AND status = ? ALLOW FILTERING"
+		iter := session.Query(query, userID, status).Iter()
+		defer iter.Close()
+
+		for iter.Scan(&todo.ID, &todo.UserID, &todo.Title, &todo.Description, &todo.Status, &todo.Created, &todo.Updated) {
+			todos = append(todos, todo)
+		}
+	} else {
+		query = "SELECT COUNT(*) FROM items WHERE user_id = ? ALLOW FILTERING"
+		if err := session.Query(query, userID).Scan(&totalTodos); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		query = "SELECT id, user_id, title, description, status, created, updated FROM items WHERE user_id = ? ALLOW FILTERING"
+		iter := session.Query(query, userID).Iter()
+		defer iter.Close()
+
+		for iter.Scan(&todo.ID, &todo.UserID, &todo.Title, &todo.Description, &todo.Status, &todo.Created, &todo.Updated) {
+			todos = append(todos, todo)
 		}
 	}
 
-	iter := session.Query(query, userID, status, pageSize).PageState(decodedPagingState).Iter()
+	totalPages := int(math.Ceil(float64(totalTodos) / float64(pageSize)))
 
-	for iter.Scan(&todo.ID, &todo.UserID, &todo.Title, &todo.Description, &todo.Status, &todo.Created, &todo.Updated) {
-		todos = append(todos, todo)
+	var nextPage, prevPage int
+	if page < totalPages {
+		nextPage = page + 1
+	} else {
+		nextPage = -1
 	}
 
-	nextPagingState := base64.StdEncoding.EncodeToString(iter.PageState())
-
-	if err := iter.Close(); err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
+	if page > 1 {
+		prevPage = page - 1
+	} else {
+		prevPage = -1
 	}
+
+	startIndex := (page - 1) * pageSize
+	endIndex := startIndex + pageSize
+
+	if endIndex > totalTodos {
+		endIndex = totalTodos
+	}
+
+	currentPageTodos := todos[startIndex:endIndex]
 
 	c.JSON(200, gin.H{
-		"todos":        todos,
-		"paging_state": nextPagingState,
+		"todos":      currentPageTodos,
+		"page":       page,
+		"totalPages": totalPages,
+		"nextPage":   nextPage,
+		"prevPage":   prevPage,
 	})
 }
 
