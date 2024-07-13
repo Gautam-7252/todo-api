@@ -119,8 +119,8 @@ This is a simple Todo API built with Go (Golang) and ScyllaDB, using the Gin web
 ### List TODO Items with Pagination
 
 1. Method: PUT
-2. URL: `http://localhost:8080/todos?user_id={user_id}&limit=10`
-   (Replace `{user_id}` with the `user ID` you used when creating the TODO item. Eg :- `b4ff8577-0b4f-4033-8ab0-3d1b2e4a7f25`)
+2. URL: `http://localhost:8080/todos?user_id={user_id}&page=1&limit=10`
+   (Replace `{user_id}` with the `user_id` you used when creating the TODO item, e.g., `b4ff8577-0b4f-4033-8ab0-3d1b2e4a7f25`. For filtering based on status, add a parameter `&status={status}` in the URL. The status parameter is optional and can be Pending, Done, etc.)
 3. Send the Request :
    You should receive a response with a list of TODO items and pagination details.
 
