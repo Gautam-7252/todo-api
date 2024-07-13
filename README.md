@@ -2,13 +2,23 @@
 
 This is a simple Todo API built with Go (Golang) and ScyllaDB, using the Gin web framework. This API allows to create, read, update, delete, and list Todo items with pagination.
 
+## Table of Contents
+
+- [TODO API](#todo-api)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Build and Run the API](#build-and-run-the-api)
+  - [Testing with Postman](#testing-with-postman)
+
 ## Prerequisites
 
 - [Go](https://golang.org/doc/install) (1.22.4)
 - [ScyllaDB](https://www.scylladb.com/download/)
+- [Docker](https://www.docker.com/products/docker-desktop/)
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
-## Getting Started
+## Setup
 
 ### 1. Clone the Repository
     ```sh
@@ -16,7 +26,7 @@ This is a simple Todo API built with Go (Golang) and ScyllaDB, using the Gin web
     cd todo-api
     ```
 
-## 2. Setup ScyllaDB
+### 2. Setup ScyllaDB
 
 - Start ScyllaDB on your machine or in a Docker container.
    ```sh
@@ -44,7 +54,7 @@ This is a simple Todo API built with Go (Golang) and ScyllaDB, using the Gin web
    );
     ```
 
-## 3. Build and Run the API
+## Build and Run the API
 
 - Build the Docker image:
    ```sh
@@ -56,7 +66,7 @@ This is a simple Todo API built with Go (Golang) and ScyllaDB, using the Gin web
    docker run --name todo-api --link scylla:scylla -p 8080:8080 -d todo-api
    ```
 
-## 4. Test with Postman
+## Testing with Postman
 
 ### Create a TODO Item
 
@@ -112,4 +122,9 @@ This is a simple Todo API built with Go (Golang) and ScyllaDB, using the Gin web
 2. URL: `http://localhost:8080/todos?user_id={user_id}&limit=10`
    (Replace `{user_id}` with the `user ID` you used when creating the TODO item. Eg :- `b4ff8577-0b4f-4033-8ab0-3d1b2e4a7f25`)
 3. Send the Request :
-   You should receive a response with a list of TODO items and the current, previous,next and total pages.
+   You should receive a response with a list of TODO items and pagination details.
+
+## Notes
+
+- Replace "b4ff8577-0b4f-4033-8ab0-3d1b2e4a7f25" with actual UUIDs for testing.
+- Ensure ScyllaDB and the API are correctly linked and running.
